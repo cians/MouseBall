@@ -74,8 +74,14 @@ typedef union Matrix3f_t
 		union { GLfloat M02; GLfloat ZX; };  //ZAxis.X
 		union { GLfloat M12; GLfloat ZY; };  //ZAxis.Y
 		union { GLfloat M22; GLfloat ZZ; GLfloat SZ; };  //ZAxis.Z and Scale Z
+		void setIdentity()
+		{
+			this->M00 = 1; this->M01 = 0; this->M02 = 0;
+			this->M10 = 0; this->M11 = 1; this->M12 = 0;
+			this->M20 = 0; this->M21 = 0; this->M22 = 1;
+		}
 	} s;
-	GLfloat M[9];
+	GLfloat M[9] = {1,0,0,0,1,0,0,0,1};
 } Matrix3fT;     //A single precision floating point 3 by 3 matrix. 
 
 typedef union Matrix4f_t
@@ -99,8 +105,15 @@ typedef union Matrix4f_t
 		union { GLfloat M13; GLfloat TY; };  //Trans.Y
 		union { GLfloat M23; GLfloat TZ; };  //Trans.Z
 		union { GLfloat M33; GLfloat TW; GLfloat SW; };  //Trans.W and Scale W
+		void setIdentity()
+		{
+			this->M00 = 1; this->M01 = 0; this->M02 = 0; this->M03 = 0;
+			this->M10 = 0; this->M11 = 1; this->M12 = 0; this->M13 = 0;
+			this->M20 = 0; this->M21 = 0; this->M22 = 1; this->M23 = 0;
+			this->M30 = 0; this->M31 = 0; this->M32 = 1; this->M33 = 0;
+		}
 	} s;
-	GLfloat M[16];
+	GLfloat M[16] = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
 } Matrix4fT;     //A single precision floating point 4 by 4 matrix. 
 
 //M00 M01 M02 M03

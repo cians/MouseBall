@@ -17,11 +17,7 @@
 /**                                                         **/
 /*************************************************************/
 
-#include <windows.h>											// Header File For Windows
-//#include <gl\gl.h>												// Header File For The OpenGL32 Library
-#include <GL\GLU.h>
-#include <gl\glut.h>												// Header File For The GLu32 Library
-//#include <GL\glaux.h>											// Header File For The GLaux Library
+#include <GL\glut.h>												// Header File For The GLu32 Library
 
 #include "math.h"                                               // Needed for sqrtf
 

@@ -1,21 +1,4 @@
-/** KempoApi: The Turloc Toolkit *****************************/
-/** *    *                                                  **/
-/** **  **  Filename: ArcBall.cpp                           **/
-/**   **    Version:  Common                                **/
-/**   **                                                    **/
-/**                                                         **/
-/**  Arcball class for mouse manipulation.                  **/
-/**                                                         **/
-/**                                                         **/
-/**                                                         **/
-/**                                                         **/
-/**                              (C) 1999-2003 Tatewake.com **/
-/**   History:                                              **/
-/**   08/17/2003 - (TJG) - Creation                         **/
-/**   09/23/2003 - (TJG) - Bug fix and optimization         **/
-/**   09/25/2003 - (TJG) - Version for NeHe Basecode users  **/
-/**                                                         **/
-/*************************************************************/
+
 
 #include <GL\glut.h>												// Header File For The GLu32 Library
 

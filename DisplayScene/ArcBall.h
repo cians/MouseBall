@@ -6,15 +6,6 @@
 /**                                                         **/
 /**  Arcball class for mouse manipulation.                  **/
 /**                                                         **/
-/**                                                         **/
-/**                                                         **/
-/**                                                         **/
-/**                              (C) 1999-2003 Tatewake.com **/
-/**   History:                                              **/
-/**   08/17/2003 - (TJG) - Creation                         **/
-/**   09/23/2003 - (TJG) - Bug fix and optimization         **/
-/**   09/25/2003 - (TJG) - Version for NeHe Basecode users  **/
-/**                                                         **/
 /*************************************************************/
 
 #ifndef _ArcBall_h

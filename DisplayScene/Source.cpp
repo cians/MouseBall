@@ -1,52 +1,107 @@
-//#include <GL/glut.h>
-#include <GL/freeglut.h>
-#include <vector>
-#include "ArcBall.h"
-#include "Map.h"
-#include "pre4paras.cpp"
-#include "drawFuncs.h"
-#include <math.h> //sqrt
-std::vector< Point > points;//camera center,feature points
-ParameterReader pd;
-struct SignalPoint
+#include "Source.h"
+void drawPlane(Eigen::Vector3f v, Eigen::Vector4f Plane, float gridSize, int gridNumb)
 {
-	Eigen::Vector3f worldPosition;
-	unsigned char r, g, b, a;
-	string name;
-	int MID;
-	Visualization::MapPoint mapPoint;
-};
-using namespace std;
-//ÓÃÓÚÊó±ê½»»¥ÏÔÊ¾µÄ²ÎÊı
-Matrix4fT   Transform;
-//ÓÃÓÚÀÛ¼ÆĞı×ª±ä»»
-Matrix3fT   LastRot,ThisRot;
-ArcBallT    ArcBall(1280.0f, 800.0f);                                // NEW: same as win size
-Point2fT    MousePt, LastMousePt;                                             // NEW: Current Mouse Point
-bool        rightClicked = false;                                        // NEW: Clicking The Mouse?
-bool        midClicked = false;
-bool        leftClicked = false;                                       // NEW: Dragging The Mouse?
-bool     midDragging = false;
-bool     rightDragging = false;
-bool     leftDragging = false;
-//ÓÃÓÚÀÛ¼ÆÆ½ÒÆ±ä»»¡£
-float LastTX = 0;   float LastTY = 0;
-float ThisTX = 0;   float ThisTY = 0;
-//ÓÃÓÚÀÛ¼ÆËõ·Å±ä»»
-float LastScale = 1;
-float ThisScale = 1;
-//Êó±êÆ½ÒÆÒÆ¶¯Òò×Ó
-float translateScale = 5;
-//Êó±êËõ·ÅÒÆ¶¯Òò×Ó
-float ScaleFactor = 0.04f;
+	//draw lines
+	//for (int i = -gridNumb; i < gridNumb+1; i++)
+	//{
+	//	float x = gridSize*i + v(0);//å›ºå®šxå¾—åˆ°ä¸€æ¡ç›´çº¿
+	//	float z0 = - gridNumb*gridSize;
+	//	float y0 = -(Plane(0)* x + Plane(2)* z0 + Plane(3)) / Plane(1);
+	//	float z1 = gridNumb*gridSize;
+	//	float y1 = -(Plane(0)* x + Plane(2)* z1 + Plane(3)) / Plane(1);
+	//	glBegin(GL_LINES);
+	//	glVertex3f(x, y0, z0);
+	//	glVertex3f(x, y1, z1);
+	//	glEnd();
+	//}
+	//for (int j = -gridNumb; j < gridNumb+1; j++)
+	//{
+	//	float z = gridSize*j + v(2);//å›ºå®šxå¾—åˆ°ä¸€æ¡ç›´çº¿
+	//	float x0 = - gridNumb*gridSize;
+	//	float y0 = -(Plane(0)* x0 + Plane(2)* z + Plane(3)) / Plane(1);
+	//	float x1 = gridNumb*gridSize;
+	//	float y1 = -(Plane(0)* x1 + Plane(2)* z + Plane(3)) / Plane(1);
+	//	glBegin(GL_LINES);
+	//	glVertex3f(x0, y0, z);
+	//	glVertex3f(x1, y1, z);
+	//	glEnd();
+	//}
 
-//È«¾Ö±äÁ¿£¬ÒªÏÔÊ¾µÄµã
-std::vector< SignalPoint> sigPoints;
-int drawPointsNum = 0;//¶¯Ì¬»æÖÆµÄµãÊı
-Eigen::Matrix3f INTRINSIC;
+	//draw quads
+	for (int j = -gridNumb; j < gridNumb + 1; j++)
+	{
+		for (int i = -gridNumb; i < gridNumb + 1; i++)
+		{
+			//å›ºå®šx
+			float dy = gridSize*Plane(2) / sqrt(Plane(1)*Plane(1) + Plane(2)*Plane(2)); //dC/sqrt(B2+C2)
+			float dyz = -gridSize*Plane(1) / sqrt(Plane(1)*Plane(1) + Plane(2)*Plane(2));
+			//å›ºå®šy
+			float dx = gridSize*Plane(2) / sqrt(Plane(0)*Plane(0) + Plane(2)*Plane(2));//dC/sqrt(A2+C2)
+			float dxz = -gridSize*Plane(0) / sqrt(Plane(0)*Plane(0) + Plane(2)*Plane(2));
 
-Visualization::Map maps;
-cv::VideoCapture imgShowSeque;
+			float x = v(0) + dx*i;	   float y = v(1) + dy*j;		float z = v(2) + dxz*i + dyz*j;
+			glColor4ub(135, 206, 235, 200);//skyblue
+			glBegin(GL_QUADS);
+			glVertex3f(x, y, z);
+			glVertex3f(x, y + dy, z + dyz);
+			glVertex3f(x + dx, y + dy, z + dyz + dxz);
+			glVertex3f(x + dx, y, z + dxz);
+			glEnd();
+			//ç”»å››è¾¹å½¢è¾¹æ¡†
+			if (j == -gridNumb)
+			{
+				glColor4ub(255, 255, 255, 255);
+				glBegin(GL_LINES);
+				glVertex3f(x, y, z);
+				glVertex3f(x, y + 2 * dy*gridNumb, z + 2 * dyz*gridNumb);
+				glEnd();
+			}
+			if (i == -gridNumb)
+			{
+				glColor4ub(255, 255, 255, 255);
+				glBegin(GL_LINES);
+				glVertex3f(x, y, z);
+				glVertex3f(x + 2 * dx*gridNumb, y, z + 2 * dxz*gridNumb);
+				glEnd();
+			}
+		}
+	}
+}
+void drawLine(Eigen::Vector3f M0, Eigen::Vector3f M1)
+{
+	glLineWidth(2.0);
+	glColor4ub(123, 104, 238, 255);
+	glBegin(GL_LINES);
+	glVertex3f(M0(0), M0(1), M0(2));
+	glVertex3f(M1(0), M1(1), M1(2));
+	glEnd();
+}
+//draw camera trajectory and plane
+void drawCameraModel(Eigen::Vector3f Cam_center, Eigen::Matrix3f Cam_M, float length, float Xoffset, float Yoffset)
+{
+	//rotationçš„é€†æ‰æ˜¯ transform matrix
+	Eigen::Vector3f Cam_R = Cam_M.row(0) / Cam_M.row(0).norm();
+	Eigen::Vector3f Cam_UP = -Cam_M.row(1) / Cam_M.row(1).norm();
+	Eigen::Vector3f Cam_BK = -Cam_M.row(2) / Cam_M.row(2).norm();
+	Eigen::Vector3f Model_center;
+	Model_center = Cam_center - length *Cam_BK / Cam_BK.norm();
+
+	Eigen::Vector3f M00, M01, M11, M10;
+	M00 = Model_center - Xoffset*Cam_R - Yoffset*Cam_UP;
+	M01 = Model_center - Xoffset*Cam_R + Yoffset*Cam_UP;
+	M11 = Model_center + Xoffset*Cam_R + Yoffset*Cam_UP;
+	M10 = Model_center + Xoffset*Cam_R - Yoffset*Cam_UP;
+
+	drawLine(M00, M01);
+	drawLine(M01, M11);
+	drawLine(M11, M10);
+	drawLine(M10, M00);
+	drawLine(M10, M00);
+	drawLine(M10, Cam_center);
+	drawLine(M11, Cam_center);
+	drawLine(M00, Cam_center);
+	drawLine(M01, Cam_center);
+}
 
 void getPlaneParas(Eigen::Vector4f &Plane4paras, Eigen::Vector3f &v3Mean)
 {
@@ -59,7 +114,7 @@ void getPlaneParas(Eigen::Vector4f &Plane4paras, Eigen::Vector3f &v3Mean)
 		const Vector3f& pos = maps.GetCamera(i).GetPose().GetCenter();
 		v3Mean += pos;
 	}
-	v3Mean /= (float)maps.CameraCount();//·¨ÏòÁ¿Æğµã
+	v3Mean /= (float)maps.CameraCount();//æ³•å‘é‡èµ·ç‚¹
 								//set matrix A[n,3]
 	Eigen::MatrixXf A(n_cameras, 3);
 	for (uint i = 0; i < n_cameras; ++i)
@@ -89,7 +144,6 @@ void getParameters(int &ViewRange, float &pSize, float &lightSize, int& gridNumb
 	 M_Y = stof(pd.getData("Model_Yoffset"));
 	 getPlaneParas(Plane4paras,v3Mean);
 }
-
 void display(void)
 {
 	int ViewRange;
@@ -103,7 +157,7 @@ void display(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//¿ªÆôzbuffer
+	//å¼€å¯zbuffer
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
@@ -112,10 +166,10 @@ void display(void)
 	glOrtho(-ViewRange , ViewRange, -ViewRange, ViewRange, -ViewRange, ViewRange);//glOrtho(left, right, bottom, top, near, far)
 
 	glMatrixMode(GL_MODELVIEW);//Applies subsequent matrix operations to the modelview matrix stack.
-	glLoadIdentity();//ÖØÖÃµ±Ç°Modelview¾ØÕó
+	glLoadIdentity();//é‡ç½®å½“å‰ModelviewçŸ©é˜µ
 	glPushMatrix();                                                    // NEW: Prepare Dynamic Transform
 	glMultMatrixf(Transform.M);                                        // NEW: Apply Dynamic Transform
-	glRotatef(270, 1.0f, 0.0f, 0.0f);      //glRotatef(angle,x,y,z),angleÊÇ½Ç¶ÈÖµ£¬x,y,zÊÇ²¼¶ûÖµ
+	glRotatef(270, 1.0f, 0.0f, 0.0f);      //glRotatef(angle,x,y,z),angleæ˜¯è§’åº¦å€¼ï¼Œx,y,zæ˜¯å¸ƒå°”å€¼
 	glRotatef(90, 0.0f, 1.0f, 0.0f);
 	glScalef(2.5, 2.5, 2.5);
 
@@ -124,22 +178,22 @@ void display(void)
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
 
-	glVertexPointer(3, GL_FLOAT, sizeof(Point), &points[0].worldPosition(0));//ÒÀ´ÎÊÇ(×ø±ê¸öÊı£¬type£¬stride£¬Ê×ÔªËØµØÖ·)£¬ºóÃæ×ø±êÊÇ3£¡
+	glVertexPointer(3, GL_FLOAT, sizeof(Point), &points[0].worldPosition(0));//ä¾æ¬¡æ˜¯(åæ ‡ä¸ªæ•°ï¼Œtypeï¼Œstrideï¼Œé¦–å…ƒç´ åœ°å€)ï¼Œåé¢åæ ‡æ˜¯3ï¼
 	glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(Point), &points[0].r);
 	glLineWidth(pSize - 2);
 	glPointSize(pSize);
-	glDrawArrays(GL_POINTS, 0, drawPointsNum);//¶¯Ì¬¸Ä±ä»æÖÆµãÊı
+	glDrawArrays(GL_POINTS, 0, drawPointsNum);//åŠ¨æ€æ”¹å˜ç»˜åˆ¶ç‚¹æ•°
 	drawCameraModel(points[drawPointsNum].worldPosition, maps.GetCamera(drawPointsNum).m_pose.m_rotation,Model_Len, Model_Xoffset, Model_Yoffset);
 
 	if (sigPoints.size() > 0)
 	{
-		glVertexPointer(3, GL_FLOAT, sizeof(SignalPoint), &sigPoints[0].worldPosition(0));//ÒÀ´ÎÊÇ(×ø±ê¸öÊı£¬type£¬stride£¬Ê×ÔªËØµØÖ·)£¬ºóÃæ×ø±êÊÇ3£¡
+		glVertexPointer(3, GL_FLOAT, sizeof(SignalPoint), &sigPoints[0].worldPosition(0));//ä¾æ¬¡æ˜¯(åæ ‡ä¸ªæ•°ï¼Œtypeï¼Œstrideï¼Œé¦–å…ƒç´ åœ°å€)ï¼Œåé¢åæ ‡æ˜¯3ï¼
 		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(SignalPoint), &sigPoints[0].r);
 		glPointSize(lightSize);
 		glDrawArrays(GL_POINTS, 0, sigPoints.size());
 	}
 	//draw plane
-	//Æ½Ãæ·½³ÌAx + By + Cz + D= 0, µ«ÏòÏÂÆ½ÒÆÏà»úµ½Â·ÃæµÄ¾àÀë
+	//å¹³é¢æ–¹ç¨‹Ax + By + Cz + D= 0, ä½†å‘ä¸‹å¹³ç§»ç›¸æœºåˆ°è·¯é¢çš„è·ç¦»
 	Eigen::Vector4f Plane2 = Plane4paras;
 	Plane2(3) -= distanceP2P;
 	float dealt = -distanceP2P / sqrt(Plane4paras(0)*Plane4paras(0) + Plane4paras(1)*Plane4paras(1) + Plane4paras(2)*Plane4paras(2));
@@ -179,7 +233,7 @@ void drawSignal(size_t frameIndex)
 	{
 		if (pd.inputSigInfo[i].trackStatus == "untracked")
 		{
-			if (frameIndex >(pd.inputSigInfo[i].startFrame + 1))//Á½Ö¡ÒÔÉÏ²ÅÄÜ¹À³öÉî¶È
+			if (frameIndex >(pd.inputSigInfo[i].startFrame + 1))//ä¸¤å¸§ä»¥ä¸Šæ‰èƒ½ä¼°å‡ºæ·±åº¦
 			{
 				SignalId = i;
 				pd.inputSigInfo[i].trackStatus = "tracking";
@@ -191,21 +245,21 @@ void drawSignal(size_t frameIndex)
 				p.name = pd.inputSigInfo[i].name;
 				p.MID = pd.inputSigInfo[i].MapPointId;
 				p.mapPoint = maps.GetMapPoint(pd.inputSigInfo[i].MapPointId);
-				sigPoints.push_back(p);//¼ÓÈëtracking ¶ÓÁĞ
+				sigPoints.push_back(p);//åŠ å…¥tracking é˜Ÿåˆ—
 			}
 		}
 	}
-	//SignalId Îª Ä¿Ç°trackµÄÖ¡Êı¡£
+	//SignalId ä¸º ç›®å‰trackçš„å¸§æ•°ã€‚
 
 	for (auto tsig = sigPoints.begin();tsig != sigPoints.end();tsig++)
 	{
-		//Ö»ÄÜÓÃÀúÊ·Ö¡ĞÅÏ¢frameIndex - measure[0].m_cam_index
-		//Ã¿Ö¡µÆ2d×ø±ê measure[i].m_img
+		//åªèƒ½ç”¨å†å²å¸§ä¿¡æ¯frameIndex - measure[0].m_cam_index
+		//æ¯å¸§ç¯2dåæ ‡ measure[i].m_img
 		//camera project matrix:Getcamera(MID),r,
-		//Ö»¸ü¸ÄÕıÔÚtrackingµÄµÆµÄXYZ,tracked µÄÖ±½ÓÓÃactÎÄ¼şµÄ3d ×ø±ê
+		//åªæ›´æ”¹æ­£åœ¨trackingçš„ç¯çš„XYZ,tracked çš„ç›´æ¥ç”¨actæ–‡ä»¶çš„3d åæ ‡
 		if (maps.GetMapPointMeasures(tsig->MID)[maps.GetMapPointMeasures(tsig->MID).size() - 1]->m_cam_index < frameIndex)
 		{
-			tsig->worldPosition = tsig->mapPoint.m_3d_point;//Èç¹ûtrackÍê³É
+			tsig->worldPosition = tsig->mapPoint.m_3d_point;//å¦‚æœtrackå®Œæˆ
 			continue;
 		}
 		std::vector < Eigen::Vector2f > img_coords;
@@ -343,7 +397,7 @@ void mouseMotion(int x, int y)
 	{
 		if (leftClicked)
 		{
-            ThisScale = LastScale * ( 1 + ScaleFactor* ( MousePt.s.Y - LastMousePt.s.Y));//Ëõ·Å±ÈÀıÊÇ£¨1+X£©±È½ÏºÏÊÊ
+            ThisScale = LastScale * ( 1 + ScaleFactor* ( MousePt.s.Y - LastMousePt.s.Y));//ç¼©æ”¾æ¯”ä¾‹æ˜¯ï¼ˆ1+Xï¼‰æ¯”è¾ƒåˆé€‚
 			Transform.s.SW  = ThisScale;
 
 		}
@@ -383,7 +437,7 @@ void RenderUpdate(int i)
 {
 	if (drawPointsNum < points.size())
 	{
-		//Ò»Ö¡Ö¡ÏÔÊ¾Í¼Ïñ
+		//ä¸€å¸§å¸§æ˜¾ç¤ºå›¾åƒ
 		cv::Mat img;	
 		imgShowSeque >> img;
 		if (img.empty())
@@ -402,23 +456,23 @@ void RenderUpdate(int i)
 
 		cv::imshow("video", img);
 		cv::moveWindow("video", 868, 0);
-		//imshowÊ±¼äÌ«¶Ì£¬movewindowºÃÏñÃ»ÓÃ£¬Ö»ºÃÔİÍ£ÏÂ£¬ÊÖ¶¯ÒÆ¶¯ÁË¡£
+		//imshowæ—¶é—´å¤ªçŸ­ï¼Œmovewindowå¥½åƒæ²¡ç”¨ï¼Œåªå¥½æš‚åœæ‰‹åŠ¨è°ƒæ•´ä¸‹çª—å£ä½ç½®ä¾¿äºå½•å±ã€‚
 		if (drawPointsNum < 1)
-			cv::waitKey(15000);
+			cv::waitKey(7000);
 		drawPointsNum++;
 		drawSignal(drawPointsNum);
-		display();//»­Â·ÃæºÍÏà»ú¹ì¼£
-		glutTimerFunc(40, RenderUpdate, 1);//ĞèÒªÔÚº¯ÊıÖĞÔÙµ÷ÓÃÒ»´Î±£³ÖÑ­»·
+		display();//ç”»è·¯é¢å’Œç›¸æœºè½¨è¿¹
+		glutTimerFunc(40, RenderUpdate, 1);//éœ€è¦åœ¨å‡½æ•°ä¸­å†è°ƒç”¨ä¸€æ¬¡ä¿æŒå¾ªç¯
 	}
 }
 int main(int argc, char **argv)
 {
-	//ÄÚ²Î
+	//å†…å‚
 	INTRINSIC <<
 		1941.45, 0, 957.207,
 		0, 1945.9, 611.806,
 		0, 0, 1;
-	//ÓÃÓÚÏÔÊ¾µÄ²ÎÊı
+	//ç”¨äºæ˜¾ç¤ºçš„å‚æ•°
 	translateScale = stof(pd.getData("translateScale"));
 	ScaleFactor = stof(pd.getData("ScaleFactor"));
 	int width = stoi(pd.getData("width"));
@@ -428,7 +482,7 @@ int main(int argc, char **argv)
 	unsigned char cam_g = (unsigned char)stoi(pd.getData("cam_g"));
 	unsigned char cam_b = (unsigned char)stoi(pd.getData("cam_b"));
 	unsigned char cam_a = (unsigned char)stoi(pd.getData("cam_a"));
-	//¶ÁÈ¡label£¬imgSequence
+	//è¯»å–labelï¼ŒimgSequence
 	string drawFeatures = pd.getData("drawFeatures");
 	string imgsPath = pd.getData("img_dir");
 	string labelPath = pd.getData("label_dir");
@@ -442,7 +496,7 @@ int main(int argc, char **argv)
 	pd.readLabel(labelPath);
 	maps.LoadAct(resultFile);
 
-	//½áºÏmap¶ÁÈ¡µÄactÎÄ¼şÍêÉÆsignalĞÅÏ¢
+	//ç»“åˆmapè¯»å–çš„actæ–‡ä»¶å®Œå–„signalä¿¡æ¯
 	for (size_t i = 0; i < pd.inputSigInfo.size(); ++i)
 	{
 		size_t MID = pd.inputSigInfo[i].MapPointId;
@@ -450,7 +504,7 @@ int main(int argc, char **argv)
 		pd.inputSigInfo[i].endFrame = maps.GetMapPointMeasures(MID)[maps.GetMapPointMeasures(MID).size() - 1]->m_cam_index;
 		pd.inputSigInfo[i].worldPosition = maps.GetMapPoint(MID).m_3d_point;
 	}
-	//ÊÇ·ñ»æÖÆÆäËüÌØÕ÷µã
+	//æ˜¯å¦ç»˜åˆ¶å…¶å®ƒç‰¹å¾ç‚¹
 	if (drawFeatures == "yes")
 	{
 		for (size_t i = 0; i < maps.MapPointCount(); ++i)
@@ -464,7 +518,7 @@ int main(int argc, char **argv)
 			points.push_back(pt);
 		}
 	}
-	//Ïà»ú¹ì¼£
+	//ç›¸æœºè½¨è¿¹
 	for (size_t i = 0; i < maps.CameraCount(); ++i)
 	{
 		Point cam;
@@ -478,7 +532,7 @@ int main(int argc, char **argv)
 	//
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-	//´´½¨´°¿Ú
+	//åˆ›å»ºçª—å£
 	glutInitWindowSize(width, height);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("CrossingReconstruction");

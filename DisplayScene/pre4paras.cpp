@@ -150,9 +150,9 @@ public:
 		}
 	}
 public:
-	map <string, string> data;
-	std::vector<Signal> inputSigInfo;//结合map读取的act文件完善signal信息
-	std::vector< Label> Labelstack;
+	map <string, string> data;//parameter.txt 其他参数
+	std::vector<Signal> inputSigInfo;//result.act 结合map读取的act文件完善signal信息
+	std::vector< Label> Labelstack;//label.txt
 };
 
 
